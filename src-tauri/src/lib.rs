@@ -1,4 +1,6 @@
+mod clipboard;
 mod hotkeys;
+mod support;
 
 use tauri::{
     menu::{Menu, MenuItem},
@@ -11,12 +13,17 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .plugin(tauri_plugin_clipboard_manager::init())
         .invoke_handler(tauri::generate_handler![
             hotkeys::list_hotkeys,
             hotkeys::recent_triggers,
             hotkeys::add_hotkey,
             hotkeys::update_hotkey,
             hotkeys::remove_hotkey,
+            clipboard::list_clipboard_history,
+            clipboard::copy_clipboard_entry,
+            clipboard::remove_clipboard_entry,
+            clipboard::clear_clipboard_history,
         ])
         .setup(|app| {
             let show_settings = MenuItem::with_id(app, "show_settings", "Open Settings", true, None::<&str>)?;
@@ -41,6 +48,7 @@ pub fn run() {
                 .build(app)?;
 
             hotkeys::init(app.handle())?;
+            clipboard::init(app.handle())?;
 
             Ok(())
         })

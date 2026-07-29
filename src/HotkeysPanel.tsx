@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { timeAgo } from "./format";
 
 interface HotkeyBinding {
   id: string;
@@ -57,16 +58,6 @@ function eventToShortcut(e: React.KeyboardEvent): string | null {
   if (e.metaKey) parts.push("Super");
   parts.push(e.code);
   return parts.join("+");
-}
-
-function timeAgo(atMs: number): string {
-  const seconds = Math.max(0, Math.round((Date.now() - atMs) / 1000));
-  if (seconds < 5) return "just now";
-  if (seconds < 60) return `${seconds}s ago`;
-  const minutes = Math.round(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.round(minutes / 60);
-  return `${hours}h ago`;
 }
 
 function ShortcutCapture({

@@ -1,16 +1,10 @@
-use std::{
-    fs,
-    path::PathBuf,
-    sync::{
-        atomic::{AtomicU64, Ordering},
-        Mutex,
-    },
-    time::{SystemTime, UNIX_EPOCH},
-};
+use std::sync::Mutex;
 
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Manager, State};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
+
+use crate::support::{generate_id, load_json, now_millis, save_json};
 
 const CONFIG_FILE: &str = "hotkeys.json";
 const MAX_LOG_ENTRIES: usize = 50;
@@ -41,7 +35,7 @@ pub struct HotkeyState {
 /// Registers persisted hotkeys and makes `HotkeyState` available to commands.
 /// Must run after the global-shortcut plugin has been added to the app.
 pub fn init(app: &AppHandle) -> Result<(), String> {
-    let mut bindings = load_bindings(app);
+    let mut bindings: Vec<HotkeyBinding> = load_json(app, CONFIG_FILE);
     for binding in bindings.iter_mut() {
         if !binding.enabled {
             continue;
@@ -54,7 +48,7 @@ pub fn init(app: &AppHandle) -> Result<(), String> {
             binding.enabled = false;
         }
     }
-    save_bindings(app, &bindings)?;
+    save_json(app, CONFIG_FILE, &bindings)?;
 
     app.manage(HotkeyState {
         bindings: Mutex::new(bindings),
@@ -92,7 +86,7 @@ pub fn add_hotkey(
         ));
     }
 
-    let id = generate_id();
+    let id = generate_id("hk");
     register_with_handler(&app, &id, &name, &canonical)?;
 
     let binding = HotkeyBinding {
@@ -102,7 +96,7 @@ pub fn add_hotkey(
         enabled: true,
     };
     bindings.push(binding.clone());
-    save_bindings(&app, &bindings)?;
+    save_json(&app, CONFIG_FILE, &*bindings)?;
     Ok(binding)
 }
 
@@ -155,7 +149,7 @@ pub fn update_hotkey(
         enabled,
     };
     bindings[index] = updated.clone();
-    save_bindings(&app, &bindings)?;
+    save_json(&app, CONFIG_FILE, &*bindings)?;
     Ok(updated)
 }
 
@@ -170,7 +164,7 @@ pub fn remove_hotkey(app: AppHandle, state: State<'_, HotkeyState>, id: String) 
     if removed.enabled {
         let _ = app.global_shortcut().unregister(removed.shortcut.as_str());
     }
-    save_bindings(&app, &bindings)?;
+    save_json(&app, CONFIG_FILE, &*bindings)?;
     Ok(())
 }
 
@@ -232,37 +226,4 @@ fn record_trigger(app: &AppHandle, id: &str, name: &str, shortcut: &str) {
         }
     }
     let _ = app.emit(TRIGGERED_EVENT, entry);
-}
-
-fn now_millis() -> u64 {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_millis() as u64
-}
-
-fn generate_id() -> String {
-    static COUNTER: AtomicU64 = AtomicU64::new(0);
-    let n = COUNTER.fetch_add(1, Ordering::Relaxed);
-    format!("hk_{}_{n}", now_millis())
-}
-
-fn config_path(app: &AppHandle) -> Result<PathBuf, String> {
-    let dir = app.path().app_config_dir().map_err(|e| e.to_string())?;
-    fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-    Ok(dir.join(CONFIG_FILE))
-}
-
-fn load_bindings(app: &AppHandle) -> Vec<HotkeyBinding> {
-    config_path(app)
-        .ok()
-        .and_then(|path| fs::read_to_string(path).ok())
-        .and_then(|contents| serde_json::from_str(&contents).ok())
-        .unwrap_or_default()
-}
-
-fn save_bindings(app: &AppHandle, bindings: &[HotkeyBinding]) -> Result<(), String> {
-    let path = config_path(app)?;
-    let json = serde_json::to_string_pretty(bindings).map_err(|e| e.to_string())?;
-    fs::write(path, json).map_err(|e| e.to_string())
 }

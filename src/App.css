@@ -212,6 +212,65 @@ body {
   font-size: 0.9rem;
 }
 
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 640px;
+}
+
+.panel-header h2 {
+  margin: 0;
+}
+
+.clipboard-search {
+  width: 100%;
+  max-width: 640px;
+  margin: 12px 0;
+}
+
+.clipboard-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-width: 640px;
+}
+
+.clipboard-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.clipboard-row-main {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.clipboard-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.clipboard-time {
+  flex-shrink: 0;
+  font-size: 0.8rem;
+}
+
+.clipboard-row-actions {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     color: #f6f6f6;
@@ -240,7 +299,8 @@ body {
     color: #b5b5b5;
   }
 
-  .hotkey-row {
+  .hotkey-row,
+  .clipboard-row {
     border-bottom-color: rgba(255, 255, 255, 0.1);
   }
 
