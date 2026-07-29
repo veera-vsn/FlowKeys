@@ -20,6 +20,13 @@ interface HotkeyBinding {
 const UPDATED_EVENT = "clipboard://updated";
 const SEARCH_DEBOUNCE_MS = 150;
 const MAX_ENTRIES = 500;
+const TOAST_MS = 2000;
+
+/// Counts what a person would call characters, so astral-plane symbols and
+/// emoji count as one rather than as two UTF-16 units.
+function charCount(text: string): number {
+  return [...text].length;
+}
 
 function preview(text: string): string {
   const firstLine = text.split(/\r?\n/, 1)[0];
@@ -33,7 +40,17 @@ export function ClipboardPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [popupShortcut, setPopupShortcut] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
   const searchToken = useRef(0);
+  const toastTimer = useRef<number | undefined>(undefined);
+
+  function showToast(message: string) {
+    setToast(message);
+    window.clearTimeout(toastTimer.current);
+    toastTimer.current = window.setTimeout(() => setToast(null), TOAST_MS);
+  }
+
+  useEffect(() => () => window.clearTimeout(toastTimer.current), []);
 
   async function refresh() {
     const list = await invoke<ClipboardEntry[]>("list_clipboard_history");
@@ -90,8 +107,10 @@ export function ClipboardPanel() {
 
   async function handleCopy(id: string) {
     setError(null);
+    const entry = entries.find((e) => e.id === id);
     try {
       await invoke("copy_clipboard_entry", { id });
+      showToast(`Copied · ${charCount(entry?.text ?? "")} characters`);
       await refresh();
     } catch (err) {
       setError(String(err));
@@ -123,6 +142,7 @@ export function ClipboardPanel() {
 
   return (
     <div className="tab-panel">
+      {toast && <div className="toast">{toast}</div>}
       <div className="panel-header">
         <h2>Clipboard</h2>
         <button type="button" className="link-button danger" onClick={handleClearAll} disabled={totalCount === 0}>

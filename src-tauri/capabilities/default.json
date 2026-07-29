@@ -1,8 +1,8 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Capability for the main window",
-  "windows": ["main"],
+  "description": "Core permissions for every FlowKeys window. All three need the event APIs: the popup and the notification are driven by events emitted from Rust, and `listen` fails silently in any window this capability doesn't cover.",
+  "windows": ["main", "clipboard-popup", "toast"],
   "permissions": [
     "core:default",
     "core:tray:default",

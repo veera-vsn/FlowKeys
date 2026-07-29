@@ -175,13 +175,3 @@ pub fn hide_clipboard_popup(app: AppHandle) {
     }
 }
 
-/// The popup's "auto-copy": picking an entry copies it to the system
-/// clipboard and dismisses the popup in one step, ready to paste.
-#[tauri::command]
-pub fn select_clipboard_entry(app: AppHandle, state: State<'_, ClipboardState>, id: String) -> Result<(), String> {
-    copy_clipboard_entry(app.clone(), state, id)?;
-    if let Some(window) = app.get_webview_window(POPUP_LABEL) {
-        let _ = window.hide();
-    }
-    Ok(())
-}

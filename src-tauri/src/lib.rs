@@ -1,7 +1,9 @@
 mod clipboard;
 mod hotkeys;
+mod settings;
 mod snippets;
 mod support;
+mod toast;
 
 use tauri::{
     menu::{Menu, MenuItem},
@@ -26,11 +28,12 @@ pub fn run() {
             clipboard::remove_clipboard_entry,
             clipboard::clear_clipboard_history,
             clipboard::hide_clipboard_popup,
-            clipboard::select_clipboard_entry,
             snippets::list_snippets,
             snippets::add_snippet,
             snippets::update_snippet,
             snippets::remove_snippet,
+            settings::get_settings,
+            settings::set_copy_on_selection,
         ])
         .setup(|app| {
             let show_settings = MenuItem::with_id(app, "show_settings", "Open Settings", true, None::<&str>)?;
@@ -56,6 +59,7 @@ pub fn run() {
                 })
                 .build(app)?;
 
+            settings::init(app.handle())?;
             hotkeys::init(app.handle())?;
             clipboard::init(app.handle())?;
             snippets::init(app.handle())?;
