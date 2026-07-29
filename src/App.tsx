@@ -52,7 +52,7 @@ function AboutPanel() {
   return (
     <div className="tab-panel">
       <h2>About FlowKeys</h2>
-      <p>Version 0.1.0 &middot; Sprint 3: Clipboard history + search</p>
+      <p>Version 0.1.0 &middot; Sprint 4: Auto-copy + clipboard popup</p>
       <p className="muted">
         One fast, native-feeling, offline-first utility for hotkeys, clipboard history, and text
         snippets — no account required.

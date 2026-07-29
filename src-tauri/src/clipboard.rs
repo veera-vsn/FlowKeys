@@ -10,6 +10,8 @@ const CONFIG_FILE: &str = "clipboard_history.json";
 const MAX_ENTRIES: usize = 500;
 const POLL_INTERVAL: Duration = Duration::from_millis(600);
 const UPDATED_EVENT: &str = "clipboard://updated";
+const POPUP_LABEL: &str = "clipboard-popup";
+const POPUP_SHOWN_EVENT: &str = "clipboard-popup://shown";
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ClipboardEntry {
@@ -125,4 +127,39 @@ pub fn clear_clipboard_history(app: AppHandle, state: State<'_, ClipboardState>)
     let mut entries = state.entries.lock().unwrap();
     entries.clear();
     save_json(&app, CONFIG_FILE, &*entries)
+}
+
+/// Shows or hides the floating clipboard popup window, centering it on
+/// whichever monitor it opens on. Called from the hotkey engine when the
+/// built-in "Toggle Clipboard Popup" action fires.
+pub fn toggle_popup(app: &AppHandle) {
+    let Some(window) = app.get_webview_window(POPUP_LABEL) else {
+        return;
+    };
+    if window.is_visible().unwrap_or(false) {
+        let _ = window.hide();
+        return;
+    }
+    let _ = window.center();
+    let _ = window.show();
+    let _ = window.set_focus();
+    let _ = app.emit_to(POPUP_LABEL, POPUP_SHOWN_EVENT, ());
+}
+
+#[tauri::command]
+pub fn hide_clipboard_popup(app: AppHandle) {
+    if let Some(window) = app.get_webview_window(POPUP_LABEL) {
+        let _ = window.hide();
+    }
+}
+
+/// The popup's "auto-copy": picking an entry copies it to the system
+/// clipboard and dismisses the popup in one step, ready to paste.
+#[tauri::command]
+pub fn select_clipboard_entry(app: AppHandle, state: State<'_, ClipboardState>, id: String) -> Result<(), String> {
+    copy_clipboard_entry(app.clone(), state, id)?;
+    if let Some(window) = app.get_webview_window(POPUP_LABEL) {
+        let _ = window.hide();
+    }
+    Ok(())
 }

@@ -1,12 +1,20 @@
 import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { timeAgo } from "./format";
+import { formatShortcut, timeAgo } from "./format";
 
 interface ClipboardEntry {
   id: string;
   text: string;
   copied_at: number;
+}
+
+interface HotkeyBinding {
+  id: string;
+  name: string;
+  shortcut: string;
+  enabled: boolean;
+  action: "custom" | "toggle_clipboard_popup";
 }
 
 const UPDATED_EVENT = "clipboard://updated";
@@ -24,6 +32,7 @@ export function ClipboardPanel() {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [popupShortcut, setPopupShortcut] = useState<string | null>(null);
   const searchToken = useRef(0);
 
   async function refresh() {
@@ -47,6 +56,12 @@ export function ClipboardPanel() {
       setEntries((prev) =>
         [event.payload, ...prev.filter((e) => e.id !== event.payload.id)].slice(0, MAX_ENTRIES),
       );
+    });
+
+    invoke<HotkeyBinding[]>("list_hotkeys").then((hotkeys) => {
+      if (cancelled) return;
+      const popupHotkey = hotkeys.find((h) => h.action === "toggle_clipboard_popup");
+      setPopupShortcut(popupHotkey && popupHotkey.enabled ? popupHotkey.shortcut : null);
     });
 
     return () => {
@@ -116,6 +131,13 @@ export function ClipboardPanel() {
       </div>
       <p className="muted">
         Copy anything and it shows up here — up to 500 items, kept only on this device.
+        {popupShortcut && (
+          <>
+            {" "}
+            Press <kbd className="hotkey-combo">{formatShortcut(popupShortcut)}</kbd> anywhere for the
+            quick popup.
+          </>
+        )}
       </p>
 
       <input

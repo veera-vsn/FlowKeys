@@ -24,11 +24,14 @@ pub fn run() {
             clipboard::copy_clipboard_entry,
             clipboard::remove_clipboard_entry,
             clipboard::clear_clipboard_history,
+            clipboard::hide_clipboard_popup,
+            clipboard::select_clipboard_entry,
         ])
         .setup(|app| {
             let show_settings = MenuItem::with_id(app, "show_settings", "Open Settings", true, None::<&str>)?;
+            let open_clipboard = MenuItem::with_id(app, "open_clipboard", "Open Clipboard", true, None::<&str>)?;
             let quit = MenuItem::with_id(app, "quit", "Quit FlowKeys", true, None::<&str>)?;
-            let tray_menu = Menu::with_items(app, &[&show_settings, &quit])?;
+            let tray_menu = Menu::with_items(app, &[&show_settings, &open_clipboard, &quit])?;
 
             TrayIconBuilder::new()
                 .icon(app.default_window_icon().unwrap().clone())
@@ -42,6 +45,7 @@ pub fn run() {
                             let _ = window.set_focus();
                         }
                     }
+                    "open_clipboard" => clipboard::toggle_popup(app),
                     "quit" => app.exit(0),
                     _ => {}
                 })

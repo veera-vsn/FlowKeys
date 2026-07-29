@@ -4,11 +4,23 @@ use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Manager, State};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
 
+use crate::clipboard;
 use crate::support::{generate_id, load_json, now_millis, save_json};
 
 const CONFIG_FILE: &str = "hotkeys.json";
 const MAX_LOG_ENTRIES: usize = 50;
 const TRIGGERED_EVENT: &str = "hotkeys://triggered";
+const DEFAULT_POPUP_SHORTCUT: &str = "Alt+Shift+V";
+
+/// What a hotkey does when pressed, beyond just showing up in the trigger log.
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum HotkeyAction {
+    /// User-defined, no built-in behavior (yet) — just fires the trigger event.
+    Custom,
+    /// Opens/closes the floating clipboard popup.
+    ToggleClipboardPopup,
+}
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct HotkeyBinding {
@@ -17,6 +29,12 @@ pub struct HotkeyBinding {
     /// Canonical form produced by the shortcut parser, e.g. "control+shift+keyk".
     pub shortcut: String,
     pub enabled: bool,
+    #[serde(default = "default_action")]
+    pub action: HotkeyAction,
+}
+
+fn default_action() -> HotkeyAction {
+    HotkeyAction::Custom
 }
 
 #[derive(Clone, Serialize)]
@@ -36,11 +54,13 @@ pub struct HotkeyState {
 /// Must run after the global-shortcut plugin has been added to the app.
 pub fn init(app: &AppHandle) -> Result<(), String> {
     let mut bindings: Vec<HotkeyBinding> = load_json(app, CONFIG_FILE);
+    ensure_builtin_hotkeys(&mut bindings);
+
     for binding in bindings.iter_mut() {
         if !binding.enabled {
             continue;
         }
-        if let Err(err) = register_with_handler(app, &binding.id, &binding.name, &binding.shortcut) {
+        if let Err(err) = register_with_handler(app, binding) {
             eprintln!(
                 "FlowKeys: couldn't re-register hotkey \"{}\" ({}): {err}",
                 binding.name, binding.shortcut
@@ -55,6 +75,25 @@ pub fn init(app: &AppHandle) -> Result<(), String> {
         log: Mutex::new(Vec::new()),
     });
     Ok(())
+}
+
+/// Seeds the built-in "Toggle Clipboard Popup" hotkey on first run. Once
+/// present it's never re-seeded — `remove_hotkey` refuses to delete
+/// non-`Custom` bindings, so it can only be disabled or rebound.
+fn ensure_builtin_hotkeys(bindings: &mut Vec<HotkeyBinding>) {
+    let has_popup_toggle = bindings.iter().any(|b| b.action == HotkeyAction::ToggleClipboardPopup);
+    if has_popup_toggle {
+        return;
+    }
+    if let Ok(parsed) = parse_and_validate(DEFAULT_POPUP_SHORTCUT) {
+        bindings.push(HotkeyBinding {
+            id: generate_id("hk"),
+            name: "Toggle Clipboard Popup".to_string(),
+            shortcut: parsed.into_string(),
+            enabled: true,
+            action: HotkeyAction::ToggleClipboardPopup,
+        });
+    }
 }
 
 #[tauri::command]
@@ -86,15 +125,15 @@ pub fn add_hotkey(
         ));
     }
 
-    let id = generate_id("hk");
-    register_with_handler(&app, &id, &name, &canonical)?;
-
     let binding = HotkeyBinding {
-        id,
+        id: generate_id("hk"),
         name,
         shortcut: canonical,
         enabled: true,
+        action: HotkeyAction::Custom,
     };
+    register_with_handler(&app, &binding)?;
+
     bindings.push(binding.clone());
     save_json(&app, CONFIG_FILE, &*bindings)?;
     Ok(binding)
@@ -133,21 +172,23 @@ pub fn update_hotkey(
         let _ = app.global_shortcut().unregister(previous.shortcut.as_str());
     }
 
-    if enabled {
-        if let Err(err) = register_with_handler(&app, &id, &name, &canonical) {
-            if previous.enabled {
-                let _ = register_with_handler(&app, &previous.id, &previous.name, &previous.shortcut);
-            }
-            return Err(err);
-        }
-    }
-
     let updated = HotkeyBinding {
         id,
         name,
         shortcut: canonical,
         enabled,
+        action: previous.action.clone(),
     };
+
+    if enabled {
+        if let Err(err) = register_with_handler(&app, &updated) {
+            if previous.enabled {
+                let _ = register_with_handler(&app, &previous);
+            }
+            return Err(err);
+        }
+    }
+
     bindings[index] = updated.clone();
     save_json(&app, CONFIG_FILE, &*bindings)?;
     Ok(updated)
@@ -160,6 +201,9 @@ pub fn remove_hotkey(app: AppHandle, state: State<'_, HotkeyState>, id: String) 
         .iter()
         .position(|b| b.id == id)
         .ok_or("Hotkey not found.")?;
+    if bindings[index].action != HotkeyAction::Custom {
+        return Err("Built-in hotkeys can't be removed — disable them instead.".into());
+    }
     let removed = bindings.remove(index);
     if removed.enabled {
         let _ = app.global_shortcut().unregister(removed.shortcut.as_str());
@@ -196,15 +240,19 @@ fn shortcut_matches(binding: &HotkeyBinding, id: u32) -> bool {
         .unwrap_or(false)
 }
 
-fn register_with_handler(app: &AppHandle, id: &str, name: &str, shortcut: &str) -> Result<(), String> {
-    let id_owned = id.to_string();
-    let name_owned = name.to_string();
-    let shortcut_owned = shortcut.to_string();
+fn register_with_handler(app: &AppHandle, binding: &HotkeyBinding) -> Result<(), String> {
+    let id_owned = binding.id.clone();
+    let name_owned = binding.name.clone();
+    let shortcut_owned = binding.shortcut.clone();
+    let action = binding.action.clone();
     let app_handle = app.clone();
     app.global_shortcut()
-        .on_shortcut(shortcut, move |_app, _shortcut, event| {
+        .on_shortcut(binding.shortcut.as_str(), move |_app, _shortcut, event| {
             if event.state == ShortcutState::Pressed {
                 record_trigger(&app_handle, &id_owned, &name_owned, &shortcut_owned);
+                if action == HotkeyAction::ToggleClipboardPopup {
+                    clipboard::toggle_popup(&app_handle);
+                }
             }
         })
         .map_err(|e| e.to_string())

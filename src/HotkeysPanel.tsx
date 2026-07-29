@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { timeAgo } from "./format";
+import { formatShortcut, timeAgo } from "./format";
 
 interface HotkeyBinding {
   id: string;
   name: string;
   shortcut: string;
   enabled: boolean;
+  action: "custom" | "toggle_clipboard_popup";
 }
 
 interface TriggerLogEntry {
@@ -30,24 +31,6 @@ const MODIFIER_CODES = new Set([
   "MetaLeft",
   "MetaRight",
 ]);
-
-function formatShortcut(shortcut: string): string {
-  return shortcut
-    .split("+")
-    .map((token) => {
-      const lower = token.toLowerCase();
-      if (lower === "control") return "Ctrl";
-      if (lower === "alt") return "Alt";
-      if (lower === "shift") return "Shift";
-      if (lower === "super") return "Win";
-      if (lower.startsWith("key")) return lower.slice(3).toUpperCase();
-      if (lower.startsWith("digit")) return lower.slice(5);
-      if (lower.startsWith("numpad")) return `Num ${lower.slice(6)}`;
-      if (lower.startsWith("arrow")) return lower.slice(5);
-      return lower.charAt(0).toUpperCase() + lower.slice(1);
-    })
-    .join(" + ");
-}
 
 function eventToShortcut(e: React.KeyboardEvent): string | null {
   if (MODIFIER_CODES.has(e.code)) return null;
@@ -201,7 +184,10 @@ export function HotkeysPanel() {
             {hotkeys.map((binding) => (
               <li key={binding.id} className="hotkey-row">
                 <div className="hotkey-row-main">
-                  <span className="hotkey-name">{binding.name}</span>
+                  <span className="hotkey-name">
+                    {binding.name}
+                    {binding.action !== "custom" && <span className="badge">built-in</span>}
+                  </span>
                   <kbd className="hotkey-combo">{formatShortcut(binding.shortcut)}</kbd>
                   <label className="toggle">
                     <input
@@ -211,13 +197,15 @@ export function HotkeysPanel() {
                     />
                     <span>{binding.enabled ? "On" : "Off"}</span>
                   </label>
-                  <button
-                    type="button"
-                    className="link-button danger"
-                    onClick={() => handleRemove(binding)}
-                  >
-                    Remove
-                  </button>
+                  {binding.action === "custom" && (
+                    <button
+                      type="button"
+                      className="link-button danger"
+                      onClick={() => handleRemove(binding)}
+                    >
+                      Remove
+                    </button>
+                  )}
                 </div>
                 {rowError[binding.id] && <p className="field-error">{rowError[binding.id]}</p>}
               </li>

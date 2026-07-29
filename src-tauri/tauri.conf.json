@@ -18,6 +18,20 @@
         "height": 640,
         "minWidth": 720,
         "minHeight": 480
+      },
+      {
+        "label": "clipboard-popup",
+        "title": "FlowKeys Clipboard",
+        "url": "index.html",
+        "width": 480,
+        "height": 380,
+        "resizable": false,
+        "decorations": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "visible": false,
+        "center": true,
+        "shadow": true
       }
     ],
     "security": {
