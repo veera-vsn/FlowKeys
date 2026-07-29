@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { HotkeysPanel } from "./HotkeysPanel";
 import { ClipboardPanel } from "./ClipboardPanel";
+import { SnippetsPanel } from "./SnippetsPanel";
 import "./App.css";
 
 type TabId = "general" | "hotkeys" | "clipboard" | "snippets" | "about";
@@ -15,7 +16,7 @@ const TABS: Tab[] = [
   { id: "general", label: "General", status: "available" },
   { id: "hotkeys", label: "Hotkeys", status: "available" },
   { id: "clipboard", label: "Clipboard", status: "available" },
-  { id: "snippets", label: "Snippets", status: "coming-soon" },
+  { id: "snippets", label: "Snippets", status: "available" },
   { id: "about", label: "About", status: "available" },
 ];
 
@@ -52,7 +53,7 @@ function AboutPanel() {
   return (
     <div className="tab-panel">
       <h2>About FlowKeys</h2>
-      <p>Version 0.1.0 &middot; Sprint 4: Auto-copy + clipboard popup</p>
+      <p>Version 0.1.0 &middot; Sprint 5: Snippets (text expansion)</p>
       <p className="muted">
         One fast, native-feeling, offline-first utility for hotkeys, clipboard history, and text
         snippets — no account required.
@@ -87,6 +88,7 @@ function App() {
         {activeTab.id === "general" && <GeneralPanel />}
         {activeTab.id === "hotkeys" && <HotkeysPanel />}
         {activeTab.id === "clipboard" && <ClipboardPanel />}
+        {activeTab.id === "snippets" && <SnippetsPanel />}
         {activeTab.id === "about" && <AboutPanel />}
         {activeTab.status === "coming-soon" && <TabPlaceholder label={activeTab.label} />}
       </main>

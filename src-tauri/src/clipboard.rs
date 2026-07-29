@@ -1,4 +1,11 @@
-use std::{sync::Mutex, thread, time::Duration};
+use std::{
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Mutex,
+    },
+    thread,
+    time::Duration,
+};
 
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Manager, State};
@@ -23,6 +30,17 @@ pub struct ClipboardEntry {
 pub struct ClipboardState {
     /// Newest first.
     entries: Mutex<Vec<ClipboardEntry>>,
+    /// Set while another feature is round-tripping the clipboard for its own
+    /// purposes (snippet expansion pastes through it), so that scratch value
+    /// never lands in the user's history.
+    suppressed: AtomicBool,
+}
+
+/// Pauses/resumes recording of clipboard changes into history.
+pub fn set_suppressed(app: &AppHandle, suppressed: bool) {
+    if let Some(state) = app.try_state::<ClipboardState>() {
+        state.suppressed.store(suppressed, Ordering::SeqCst);
+    }
 }
 
 /// Loads persisted history, makes `ClipboardState` available to commands, and
@@ -32,6 +50,7 @@ pub fn init(app: &AppHandle) -> Result<(), String> {
     let entries: Vec<ClipboardEntry> = load_json(app, CONFIG_FILE);
     app.manage(ClipboardState {
         entries: Mutex::new(entries),
+        suppressed: AtomicBool::new(false),
     });
 
     let app_handle = app.clone();
@@ -60,6 +79,9 @@ fn record_entry(app: &AppHandle, text: String) {
     let Some(state) = app.try_state::<ClipboardState>() else {
         return;
     };
+    if state.suppressed.load(Ordering::SeqCst) {
+        return;
+    }
     let mut entries = state.entries.lock().unwrap();
     if entries.first().map(|e| e.text.as_str()) == Some(text.as_str()) {
         return;
