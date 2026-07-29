@@ -116,6 +116,102 @@ body {
   font-size: 0.9rem;
 }
 
+.hotkey-list {
+  list-style: none;
+  margin: 16px 0;
+  padding: 0;
+  max-width: 640px;
+}
+
+.hotkey-row {
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.hotkey-row-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hotkey-name {
+  flex: 1;
+}
+
+.hotkey-combo {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85rem;
+  background-color: rgba(0, 0, 0, 0.06);
+  border-radius: 6px;
+  padding: 3px 8px;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  color: #646cff;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.link-button.danger {
+  color: #d3455b;
+}
+
+.link-button:hover {
+  border-color: transparent;
+  text-decoration: underline;
+}
+
+.field-error {
+  color: #d3455b;
+  font-size: 0.85rem;
+  margin: 4px 0 0;
+}
+
+.hotkey-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  max-width: 640px;
+  margin-top: 8px;
+}
+
+.hotkey-name-input {
+  flex: 1;
+}
+
+.shortcut-capture {
+  width: 220px;
+  text-align: center;
+  cursor: pointer;
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.trigger-log {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  max-width: 400px;
+}
+
+.trigger-log li {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 0.9rem;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     color: #f6f6f6;
@@ -142,5 +238,17 @@ body {
 
   .muted {
     color: #b5b5b5;
+  }
+
+  .hotkey-row {
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .hotkey-combo {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .shortcut-capture {
+    background-color: rgba(255, 255, 255, 0.06);
   }
 }

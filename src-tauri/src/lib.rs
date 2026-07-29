@@ -1,3 +1,5 @@
+mod hotkeys;
+
 use tauri::{
     menu::{Menu, MenuItem},
     tray::TrayIconBuilder,
@@ -8,6 +10,14 @@ use tauri::{
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .invoke_handler(tauri::generate_handler![
+            hotkeys::list_hotkeys,
+            hotkeys::recent_triggers,
+            hotkeys::add_hotkey,
+            hotkeys::update_hotkey,
+            hotkeys::remove_hotkey,
+        ])
         .setup(|app| {
             let show_settings = MenuItem::with_id(app, "show_settings", "Open Settings", true, None::<&str>)?;
             let quit = MenuItem::with_id(app, "quit", "Quit FlowKeys", true, None::<&str>)?;
@@ -29,6 +39,8 @@ pub fn run() {
                     _ => {}
                 })
                 .build(app)?;
+
+            hotkeys::init(app.handle())?;
 
             Ok(())
         })
