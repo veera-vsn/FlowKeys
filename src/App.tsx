@@ -78,9 +78,15 @@ function GeneralPanel() {
         />
       </label>
       <p className="muted setting-note">
-        Selecting text with the mouse copies it automatically, anywhere on your system. FlowKeys
-        does this by sending <kbd className="hotkey-combo">Ctrl+C</kbd>, so leave it off if you
-        select text in terminals — there <kbd className="hotkey-combo">Ctrl+C</kbd> interrupts
+        Selecting text with the mouse copies it automatically, anywhere on your system. Hold{" "}
+        <kbd className="hotkey-combo">Ctrl</kbd> while selecting to leave your clipboard untouched —
+        useful when you're selecting text in order to paste over it, and handy because{" "}
+        <kbd className="hotkey-combo">Ctrl</kbd> is already down for the{" "}
+        <kbd className="hotkey-combo">Ctrl+V</kbd> that follows.
+      </p>
+      <p className="muted setting-note">
+        FlowKeys copies by sending <kbd className="hotkey-combo">Ctrl+C</kbd>, so leave this off if
+        you select text in terminals — there <kbd className="hotkey-combo">Ctrl+C</kbd> interrupts
         whatever is running.
       </p>
       {error && <p className="field-error">{error}</p>}

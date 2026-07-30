@@ -217,6 +217,7 @@ fn run_expansion_engine(app: AppHandle) {
     let buffer = RefCell::new(String::new());
     let pointer = Cell::new((0.0f64, 0.0f64));
     let drag_start = Cell::new(None::<(f64, f64)>);
+    let ctrl_held = Cell::new(false);
 
     let result = rdev::listen(move |event| {
         // Ignore everything while our own synthetic keystrokes are in flight.
@@ -227,6 +228,14 @@ fn run_expansion_engine(app: AppHandle) {
         match event.event_type {
             EventType::MouseMove { x, y } => {
                 pointer.set((x, y));
+                return;
+            }
+            EventType::KeyPress(RdevKey::ControlLeft | RdevKey::ControlRight) => {
+                ctrl_held.set(true);
+                return;
+            }
+            EventType::KeyRelease(RdevKey::ControlLeft | RdevKey::ControlRight) => {
+                ctrl_held.set(false);
                 return;
             }
             // A click puts the caret somewhere we didn't track, so whatever we
@@ -248,6 +257,13 @@ fn run_expansion_engine(app: AppHandle) {
                 if !settings::copy_on_selection(&app) {
                     return;
                 }
+                // Holding Ctrl while selecting means "leave my clipboard
+                // alone" — the user is selecting text to paste over it, and
+                // copying the selection would destroy what they meant to
+                // paste. Ctrl is already down for the Ctrl+V that follows.
+                if ctrl_held.get() {
+                    return;
+                }
                 let (x, y) = pointer.get();
                 if (x - start.0).hypot(y - start.1) < DRAG_THRESHOLD {
                     return;
@@ -258,7 +274,10 @@ fn run_expansion_engine(app: AppHandle) {
                 }
                 return;
             }
-            EventType::KeyPress(key) if resets_buffer(key) => {
+            // Ctrl-combos are shortcuts, not typing: Ctrl+V and Ctrl+X change
+            // the text around the caret without us seeing the characters, so
+            // anything buffered no longer describes what's in front of it.
+            EventType::KeyPress(key) if resets_buffer(key) || ctrl_held.get() => {
                 buffer.borrow_mut().clear();
                 return;
             }
