@@ -117,6 +117,11 @@ body {
   font-size: 0.9rem;
 }
 
+.setting-note {
+  max-width: 480px;
+  margin-top: 8px;
+}
+
 .hotkey-list {
   list-style: none;
   margin: 16px 0;
@@ -270,6 +275,72 @@ body {
   display: flex;
   gap: 10px;
   flex-shrink: 0;
+}
+
+.snippet-preview {
+  font-size: 0.85rem;
+}
+
+/* Drops in from the top of the window so confirmations don't shift the
+   content underneath them. */
+.toast {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background-color: #2f7d4f;
+  color: #fff;
+  font-size: 0.85rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  animation: toast-in 160ms ease-out;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: none;
+  }
+}
+
+.snippet-form,
+.snippet-edit-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: flex-start;
+  max-width: 640px;
+  margin-top: 8px;
+}
+
+.snippet-trigger-input {
+  width: 160px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.snippet-content-input {
+  flex: 1 1 100%;
+  min-height: 60px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.snippet-edit-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
 }
 
 @media (prefers-color-scheme: dark) {

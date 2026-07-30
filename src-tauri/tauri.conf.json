@@ -32,6 +32,21 @@
         "visible": false,
         "center": true,
         "shadow": true
+      },
+      {
+        "label": "toast",
+        "title": "FlowKeys Notification",
+        "url": "index.html",
+        "width": 190,
+        "height": 38,
+        "resizable": false,
+        "decorations": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "visible": false,
+        "focus": false,
+        "transparent": true,
+        "shadow": false
       }
     ],
     "security": {

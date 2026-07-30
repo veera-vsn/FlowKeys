@@ -1,9 +1,11 @@
-html,
-body {
+/* Scoped to this window; see the note in Toast.css. */
+:root[data-window="clipboard-popup"],
+:root[data-window="clipboard-popup"] body {
   background: transparent;
 }
 
 .popup {
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -15,10 +17,74 @@ body {
   overflow: hidden;
 }
 
-.popup-search {
-  width: 100%;
-  font-size: 1rem;
+/* Slides down over the search row so the confirmation lands where the eye
+   already is, without shifting the list underneath it. */
+.popup-toast {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  z-index: 2;
+  padding: 7px 10px;
+  border-radius: 6px;
+  background-color: #2f7d4f;
+  color: #fff;
+  font-size: 0.85rem;
+  text-align: center;
+  animation: popup-toast-in 140ms ease-out;
+}
+
+@keyframes popup-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .popup-toast {
+    animation: none;
+  }
+}
+
+.popup-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 8px;
+}
+
+.popup-search {
+  flex: 1;
+  min-width: 0;
+  font-size: 1rem;
+}
+
+/* The popup window is borderless, so this is its only close affordance
+   besides Esc and clicking away. */
+.popup-close {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  box-shadow: none;
+  color: #6b6b6b;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.popup-close:hover {
+  background-color: rgba(0, 0, 0, 0.08);
+  border-color: transparent;
+  color: inherit;
 }
 
 .popup-list {
@@ -69,7 +135,13 @@ body {
   }
 
   .popup-empty,
-  .popup-hint {
+  .popup-hint,
+  .popup-close {
     color: #b5b5b5;
+  }
+
+  .popup-close:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+    color: #f6f6f6;
   }
 }
