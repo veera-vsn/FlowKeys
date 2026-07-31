@@ -80,19 +80,33 @@ This is a sequencing decision, not a philosophical one about AI:
 
 Same sprint structure as v1.0, with voice moved from Sprint 7 to Sprint 10 (gated on beta data), a beta checkpoint inserted at Sprint 6, and paid-tier features slotted in immediately after.
 
-| Sprint | Focus | Outcome | Tier |
-|---|---|---|---|
-| 1 | Foundation + Tray + Settings | Stable shell application | Free |
-| 2 | Hotkey engine | Reliable global shortcuts | Free |
-| 3 | Clipboard history + search | First feature used daily | Free |
-| 4 | Auto-copy + clipboard popup | Complete clipboard workflow | Free |
-| 5 | Snippets (GUI, not YAML) | Text expansion, visual editor | Free |
-| 6 | Beta launch + telemetry opt-in | Real usage data on retention | — |
-| 7 | Cloud sync (settings + snippets) | First paid hook | **Pro** |
-| 8 | AI-assisted snippet/macro creation | Natural-language → snippet | **Pro** |
-| 9 | Smart clipboard (auto-format JSON/CSV/dates) | AI-lite utility, still mostly local | **Pro** |
-| 10 | Voice typing (whisper.cpp, push-to-talk) | Offline dictation, revisited post-data | Pro or Free — decide after Sprint 6 data |
-| 11 | Polish, installer, updater | Public 1.0 release | — |
+| Sprint | Focus | Outcome | Tier | Status |
+|---|---|---|---|---|
+| 1 | Foundation + Tray + Settings | Stable shell application | Free | ✅ Done |
+| 2 | Hotkey engine | Reliable global shortcuts | Free | ✅ Done |
+| 3 | Clipboard history + search | First feature used daily | Free | ✅ Done |
+| 4 | Auto-copy + clipboard popup | Complete clipboard workflow | Free | ✅ Done |
+| 5 | Snippets (GUI, not YAML) | Text expansion, visual editor | Free | ✅ Done |
+| 6 | Beta launch + telemetry opt-in | Real usage data on retention | — | Next |
+| 7 | Cloud sync (settings + snippets) | First paid hook | **Pro** | |
+| 8 | AI-assisted snippet/macro creation | Natural-language → snippet | **Pro** | |
+| 9 | Smart clipboard (auto-format JSON/CSV/dates) | AI-lite utility, still mostly local | **Pro** | |
+| 10 | Voice typing (whisper.cpp, push-to-talk) | Offline dictation, revisited post-data | Pro or Free — decide after Sprint 6 data | |
+| 11 | Polish, installer, updater | Public 1.0 release | — | |
+
+### Notes on delivered scope
+
+- **Sprint 4's "auto-copy"** shipped as *picking an entry from the popup writes it to the clipboard
+  and dismisses in one step*. Copy-on-text-selection — the other reading of the phrase — arrived
+  later as an opt-in setting, since it works by sending `Ctrl+C` after a drag and that interrupts
+  running processes in a terminal.
+- **Sprint 5's text expansion pastes rather than types.** Simulating keystrokes per character was
+  tested and abandoned: characters arrived out of order, got dropped, and mangled newlines. Pasting
+  is atomic and preserves multi-line snippets.
+- **Sprint 11 has a dependency worth pulling forward.** FlowKeys only works while its process runs,
+  and there is currently no installer and no launch-at-login, so a beta tester must build from
+  source and restart the app manually after every reboot. That likely needs solving *before* the
+  Sprint 6 beta, or retention data will measure packaging friction rather than the product.
 
 ---
 
